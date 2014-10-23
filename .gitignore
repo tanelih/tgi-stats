@@ -2,4 +2,5 @@
 *.apikey
 *.members
 
+public/dist/
 node_modules/
