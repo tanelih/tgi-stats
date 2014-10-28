@@ -37,11 +37,6 @@ var Match = mongoose.connect('mongodb://localhost/tgistats')
  * NOTE This is a 'cron'-like job which is run every 'monday' at '0200 AM'.
  */
 new cron.CronJob('00 00 02 * * 1', function() {
-	// http://docs.mongodb.org/manual/reference/operator/aggregation/group/#group-documents-by-author
-	//
-	// TODO Don't use '$week' operator, set a custom 'week' field in order to
-	//      prevent 'sunday' being the first day of week.
-	//
 	// db.matches.aggregate([
 	// 	{
 	// 		"$group": {
@@ -65,6 +60,10 @@ new cron.CronJob('00 00 02 * * 1', function() {
 /**
  * Start a 'PlayerSummaryWorker' for the given 'steamIDs' and a
  * 'MatchHistoryWorker' for each given 'steamID'.
+ *
+ * TODO Should we handle all data stuff in the workers themselves, or leave
+ *      them in their current, reasonably generic state. By data stuff I mean
+ *      having the workers actually store the mongoose documents etc...
  */
 function startWorkers(playerQueries) {
 	var SECOND = 1000;
@@ -77,15 +76,18 @@ function startWorkers(playerQueries) {
 		return q.response.steamid;
 	});
 
-	// var psworker = new PlayerSummaryWorker(steamIDs);
-	// psworker.on('player', function onPlayer(data) {
-	// 	// ...
-	// });
-	// setInterval(psworker.run.bind(psworker), MINUTE);
+	// Run a single 'PlayerSummaryWorker' for all the users, because the Steam
+	// 'PlayerSummary' API allows multiple users per request.
+	var psworker = new PlayerSummaryWorker(steamIDs);
 
+	psworker.on('player', function onPlayer(data) {
+		require('purdy')(data);
+	});
+
+	setInterval(psworker.run.bind(psworker), 10 * SECOND);
+
+	// Create a 'MatchHistoryWorker' for each user.
 	steamIDs.forEach(function(steamID) {
-		console.log('Spawning new MatchHistoryWorker...');
-
 		var mhworker = new MatchHistoryWorker(steamID);
 
 		mhworker.on('match', function onMatch(match) {
@@ -111,9 +113,12 @@ function startWorkers(playerQueries) {
 		});
 
 		/**
-		 *
+		 * Run the 'MatchHistory' worker, passing in the latest match as an
+		 * argument to limit the amount of requests made.
 		 */
 		setInterval(function getMatchHistory() {
+			// Sort the matches by 'startedAt', in a descending order, so that
+			// the newest match will be the first element.
 			var latest = Match.find().sort({ 'startedAt': -1 }).limit(1);
 
 			latest.exec(function(err, matches) {
@@ -142,6 +147,7 @@ server.listen(process.env.PORT || 3000, function() {
 	console.log('Server listening at ', this.address().port);
 
 	// Resolve the 'members' to actual SteamIDs.
+
 	var members  = process.env.CLAN_MEMBERS.split(',');
 	var endpoint = '/ISteamUser/ResolveVanityURL/v0001/';
 	var promises = [ ];
