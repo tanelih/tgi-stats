@@ -1,10 +1,11 @@
 'use strict';
 
-var fs       = require('fs');
-var cron     = require('cron');
-var moment   = require('moment');
-var Promise  = require('promise');
-var mongoose = require('mongoose');
+var fs         = require('fs');
+var cron       = require('cron');
+var moment     = require('moment');
+var Promise    = require('promise');
+var mongoose   = require('mongoose');
+var BigInteger = require('big-integer');
 
 // Set 'moment' locale to 'fi'.
 moment.locale('fi');
@@ -28,8 +29,9 @@ if(fs.existsSync('.members')) {
 }
 
 // Setup 'mongoose' and its 'schemas'.
-var Match = mongoose.connect('mongodb://localhost/tgistats')
-	.model('match', require('./lib/schemas/match'));
+mongoose.connect('mongodb://localhost/tgistats');
+mongoose.model('match',  require('./lib/schemas/match'));
+mongoose.model('player', require('./lib/schemas/player'));
 
 /**
  * Calculate the top performing players and grant awards based on their stats.
@@ -57,85 +59,6 @@ new cron.CronJob('00 00 02 * * 1', function() {
 	//      }
 }).start();
 
-/**
- * Start a 'PlayerSummaryWorker' for the given 'steamIDs' and a
- * 'MatchHistoryWorker' for each given 'steamID'.
- *
- * TODO Should we handle all data stuff in the workers themselves, or leave
- *      them in their current, reasonably generic state. By data stuff I mean
- *      having the workers actually store the mongoose documents etc...
- */
-function startWorkers(playerQueries) {
-	var SECOND = 1000;
-	var MINUTE = 60 * SECOND;
-
-	var MatchHistoryWorker  = require('./lib/workers/match-history');
-	var PlayerSummaryWorker = require('./lib/workers/player-summary');
-
-	var steamIDs = playerQueries.map(function(q) {
-		return q.response.steamid;
-	});
-
-	// Run a single 'PlayerSummaryWorker' for all the users, because the Steam
-	// 'PlayerSummary' API allows multiple users per request.
-	var psworker = new PlayerSummaryWorker(steamIDs);
-
-	psworker.on('player', function onPlayer(data) {
-		require('purdy')(data);
-	});
-
-	setInterval(psworker.run.bind(psworker), 10 * SECOND);
-
-	// Create a 'MatchHistoryWorker' for each user.
-	steamIDs.forEach(function(steamID) {
-		var mhworker = new MatchHistoryWorker(steamID);
-
-		mhworker.on('match', function onMatch(match) {
-			var startedAt = moment(match.start_time * 1000);
-
-			// Pluck fields we want to preserve from the match data.
-			var data = {
-				'matchID':    match.match_id,
-				'startedAt':  startedAt,
-				'weekNumber': startedAt.week(),
-			}
-
-			var opts  = { 'upsert':  true }
-			var query = { 'matchID': match.match_id }
-
-			// Insert a new match if there isn't one, otherwise just update the
-			// existing one.
-			Match.update(query, data, opts, function(err) {
-				if(err) {
-					return console.error(err);
-				}
-			});
-		});
-
-		/**
-		 * Run the 'MatchHistory' worker, passing in the latest match as an
-		 * argument to limit the amount of requests made.
-		 */
-		setInterval(function getMatchHistory() {
-			// Sort the matches by 'startedAt', in a descending order, so that
-			// the newest match will be the first element.
-			var latest = Match.find().sort({ 'startedAt': -1 }).limit(1);
-
-			latest.exec(function(err, matches) {
-				if(err) {
-					return console.error(err);
-				}
-				// If we already have matches, use the latest match as
-				// a starting point for retrieving new matches.
-				if(matches[0]) {
-					return mhworker.run({ 'startAt': matches[0].startedAt });
-				}
-				return mhworker.run();
-			});
-		}, 10 * SECOND);
-	});
-}
-
 var server  = require('./lib/server');
 var request = require('./lib/utils/request');
 
@@ -143,22 +66,48 @@ var request = require('./lib/utils/request');
 //
 // TODO Use 'moment' to get 'fi' locale week number, and add them to the
 //      matches.
-server.listen(process.env.PORT || 3000, function() {
+server.listen(process.env.PORT || 3000, function onServerListening() {
 	console.log('Server listening at ', this.address().port);
 
-	// Resolve the 'members' to actual SteamIDs.
+	var endpoint   = '/ISteamUser/ResolveVanityURL/v0001/';
+	var promises   = [ ];
+	var steamIDs   = [ ];
+	var vanityURLs = process.env.CLAN_MEMBERS.split(',');
 
-	var members  = process.env.CLAN_MEMBERS.split(',');
-	var endpoint = '/ISteamUser/ResolveVanityURL/v0001/';
-	var promises = [ ];
-
-	for(var i = 0; i < members.length; i++) {
-		promises.push(request(endpoint, { 'vanityurl': members[i] }));
+	// Filter out actual 'SteamIDs' from 'vanityURLs'.
+	for(var i = 0; i < vanityURLs.length; i++) {
+		try {
+			steamIDs.push(BigInteger(vanityURLs[i]));
+		}
+		catch(err) {
+			promises.push(request(endpoint, { 'vanityurl': vanityURLs[i] }));
+		}
 	}
+
+	var MatchHistoryWorker  = require('./lib/workers/match-history');
+	var PlayerSummaryWorker = require('./lib/workers/player-summary');
 
 	// Once all members have been resolved, start workers for each one.
 	//
 	// TODO Do these need to be background processes? Can we utilize something
 	//      like the 'child_process' module?
-	Promise.all(promises).then(startWorkers, console.error);
+	Promise.all(promises).then(
+		function onResolvedVanityURLs(queries) {
+			var resolvedIDs = queries.map(function(q) {
+				return q.response.steamid;
+			});
+
+			// We finally have all of our Steam IDs in one place.
+			var playerSteamIDs = resolvedIDs.concat(steamIDs);
+
+			// Start a 'PlayerSummaryWorker' for our players.
+			new PlayerSummaryWorker(playerSteamIDs).run();
+
+			// Start 'MatchHistoryWorker' for each player, which will in turn
+			// run 'MatchDetailsWorker' for found matches.
+			playerSteamIDs.forEach(function(playerSteamID) {
+				new MatchHistoryWorker(playerSteamID).run();
+			});
+		},
+		console.error);
 });
