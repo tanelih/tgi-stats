@@ -15,7 +15,7 @@ moment.locale('fi');
 if(fs.existsSync('.apikey')) {
 	process.env.STEAM_API_KEY = fs.readFileSync('.apikey', {
 		'encoding': 'utf-8'
-	});
+	}).split('\n')[0];
 }
 
 // We also check for a '.members' file if present and set it to the
