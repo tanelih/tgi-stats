@@ -22,7 +22,7 @@ if(fs.existsSync('.apikey')) {
 // 'CLAN_MEMBERS' environmental value.
 if(fs.existsSync('.members')) {
 	var members = fs.readFileSync('.members', { 'encoding': 'utf-8' })
-		.split('\n');
+		replace(/\n/g, '').split('\n');
 	// Filter out any empty lines. Join it into a ','-separated string.
 	process.env.CLAN_MEMBERS = members
 		.filter(function(m) { return !!m; }).join(',');
