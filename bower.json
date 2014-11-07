@@ -1,0 +1,10 @@
+{
+  "name": "tgi-stats",
+  "version": "0.9.0",
+  "homepage": "https://github.com/tanelih/tgi-stats",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "bootstrap": "~3.3.0"
+  }
+}

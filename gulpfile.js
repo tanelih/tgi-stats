@@ -5,7 +5,6 @@ var less       = require('gulp-less');
 var source     = require('vinyl-source-stream');
 var browserify = require('browserify');
 var reactify   = require('reactify');
-// var partialify = require('partialify');
 
 gulp.task('img', function() {
 	return gulp.src('./public/src/img/**/*.png')
@@ -15,7 +14,7 @@ gulp.task('img', function() {
 gulp.task('less', function() {
 	return gulp.src('./public/src/less/index.less')
 		.pipe(less({
-			'paths': ['./public/src/less/lib/']
+			'paths': ['./bower_components/']
 		}))
 		.pipe(gulp.dest('./public/dist/css/'));
 });

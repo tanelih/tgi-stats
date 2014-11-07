@@ -2,6 +2,6 @@
 *.apikey
 *.members
 
-public/lib/
 public/dist/
 node_modules/
+bower_components/
