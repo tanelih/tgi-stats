@@ -70,7 +70,9 @@ module.exports = React.createClass({
 		}
 
 		this.setState({
-			'rankings': _.sortBy(rankings, 'value').reverse(),
+			'rankings': rankings.sort(function(a, b) {
+				return b.value - a.value;
+			})
 		});
 	},
 
