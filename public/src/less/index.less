@@ -1,0 +1,158 @@
+/**
+ * TODO Import only the stuff we need.
+ */
+@import "./bootstrap/bootstrap.less";
+
+/**
+ * Set a 'fixed' background image for our site, that will not move when we
+ * scroll, creating a 'parallax' effect.
+ */
+html {
+	/**
+	 * TODO Create a 'ribbonized' image that can be 'repeat-x' and has a
+	 *      specific height in 'px'.
+	 */
+	background: url('../img/samick.png') repeat-y top center fixed;
+
+	/**
+	 * If the image is not large enough, there is always a black background.
+	 *
+	 * TODO Get a 'wide' image, maybe a chain of small pictures.
+	 */
+	background-color: #000;
+
+	/**
+	 * Preserve the image's aspect ratio.
+	 */
+	background-size:         auto 64vh;
+	-webkit-background-size: auto 64vh;
+
+	body {
+		background-color: transparent;
+	}
+}
+
+/**
+ * Header section: title with a 'parallax' effect.
+ */
+.header {
+	height:   50vh;
+	position: relative;
+
+	.title {
+		color:    #FFF;
+		right:    8px;
+		bottom:   0px;
+		position: absolute;
+	}
+}
+
+/**
+ * Content section, that wraps the 'bootstrap container', containing our actual
+ * dynamic content.
+ */
+.content {
+	min-height: 50vh;
+	background: #FFF;
+
+	/**
+	 * Overwrite 'bootstrap' container's 960px 'max-width'.
+	 */
+	.container {
+		max-width: 768px !important;
+
+		padding-top:    8px;
+		padding-bottom: 8px;
+	}
+}
+
+/**
+ * Footer containing the necessary 'powered-by' stuff.
+ */
+.footer {
+
+	height:   128px;
+	position: relative;
+
+	a {
+		color:           #FFF;
+		text-decoration: none;
+
+		position: absolute;
+
+		left:   16px;
+		bottom: 16px;
+	}
+}
+
+/**
+ *
+ */
+.week-picker {
+	margin-top:    4px;
+	margin-bottom: 8px;
+}
+
+/**
+ * Overwrite bootstrap's 'border-radius' for list items.
+ */
+.list-group-item {
+	margin:  4px auto;
+	padding: 4px 8px !important;
+
+	border:        1px solid @gray-lighter !important;
+	border-radius: 0px !important;
+
+	/**
+	 * Center the text-content inside 'list-group-item' vertically.
+	 */
+	.text-right {
+		line-height: 32px;
+	}
+
+	/**
+	 * Border intensifies.
+	 */
+	&:hover {
+		border: 1px solid @list-group-border !important;
+	}
+}
+
+/**
+ *
+ */
+.player-portrait {
+	width:  32px;
+	height: 32px;
+
+	margin-right: 8px;
+
+	opacity: 0.8;
+
+	/**
+	 * Visibility intensifies.
+	 */
+	&:hover {
+		opacity: 1.00;
+	}
+}
+
+.stats-list {
+	border: none !important;
+
+	box-shadow:         none !important;
+	-webkit-box-shadow: none !important;
+
+	.panel-heading {
+		border:        1px solid @panel-default-border !important;
+		border-radius: 0px !important;
+	}
+
+	.sample-size {
+		color: @gray-light;
+
+		font-size:    11px;
+		line-height:  32px;
+		margin-right: 24px;
+	}
+}

@@ -1,29 +1,24 @@
-'use strict';
+'use strict'
 
+var page  = require('page');
+var React = require('react');
 var moment = require('moment');
-    moment.locale('fi');
 
-angular.module('tgi-stats', [ 'ngRoute' ])
-	.config(function routeConfiguration($routeProvider, $locationProvider) {
+var WeekView = React.createFactory(require('./views/week.jsx'));
 
-		var year = moment().year();
-		var week = moment().week();
+page('/', function(ctx) {
+	var year = moment().year();
+	var week = moment().week();
 
-		$routeProvider
-			.when('/matches/:year/:week', {
-				template:   require('../partials/week-view.html'),
-				controller: require('./controllers/week-view'),
-			})
-			// .when('/account/:id', {
-			// 	template: 'partials/account-view.html',
-			// 	controller: function() {
-			// 		console.log('account-view');
-			// 	}
-			// })
-			.otherwise('/matches/' + year + '/' + week + '');
+	return page.show('/matches/' + year + '/' + week + '');
+});
 
-		$locationProvider.html5Mode(true);
-	})
-	.run(function run() {
-		console.log('asd');
+page('/matches/:year/:week', function(ctx) {
+	var weekView = WeekView({
+		'year': parseInt(ctx.params.year),
+		'week': parseInt(ctx.params.week),
 	});
+	return React.render(weekView, document.getElementById('view'));
+});
+
+moment.locale('fi') && page.start();

@@ -1,7 +1,6 @@
-<html ng-app="tgi-stats">
+<html>
 <head>
 
-	<base href="/">
 	<meta charset="UTF-8">
 	<title>TGI Stats</title>
 
@@ -10,10 +9,24 @@
 </head>
 <body>
 
-	<div ng-view></div>
+	<!-- header content -->
+	<div class="header">
+		<h1 class="title">TGI STATS</h1>
+	</div>
 
-	<script src="./lib/angular/angular.js"></script>
-	<script src="./lib/angular-route/angular-route.js"></script>
+	<!-- dynamic content -->
+	<div class="content">
+		<div id="view" class="container">
+			<!-- app goes here -->
+		</div>
+	</div>
+
+	<!-- footer content -->
+	<div class="footer">
+		<a href="http://steampowered.com" target="_blank">
+			Powered by Steam
+		</a>
+	</div>
 
 	<script src="./dist/scripts/index.js"></script>
 
