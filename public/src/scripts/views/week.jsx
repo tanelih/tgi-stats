@@ -12,7 +12,7 @@ var WeekPicker = require('../components/week-picker.jsx');
  *
  */
 function getMatches(at, callback) {
-	var url = '/matches/' + at.year + '/' + at.week + '';
+	var url = '/api/matches/' + at.year + '/' + at.week + '';
 
 	return request.get(url, function(res) {
 		// TODO Handle errors!
