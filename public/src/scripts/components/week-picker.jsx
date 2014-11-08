@@ -27,7 +27,7 @@ module.exports = React.createClass({
 
 		// Don't show the 'next-week' control if we have selected the current
 		// week. This is achieved by leaving the 'next-week' control undefined.
-		if(moment().week() > this.props.week) {
+		if(moment().year() >= curr.year() && moment().week() > curr.week()) {
 			var nextWeek = (
 				<a href={nextWeekURL}>&gt;</a>
 			);

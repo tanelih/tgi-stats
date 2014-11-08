@@ -1,6 +1,5 @@
 'use strict'
 
-var _       = require('lodash');
 var React   = require('react');
 var moment  = require('moment');
 var request = require('superagent');
@@ -16,8 +15,11 @@ function getMatches(at, callback) {
 	var url = '/matches/' + at.year + '/' + at.week + '';
 
 	return request.get(url, function(res) {
+		// TODO Handle errors!
 		var matches = res.body;
-		    matches = _.sortBy(matches, 'startedAt').reverse();
+		    matches = matches.sort(function(a, b) {
+		    	return moment(b.startedAt) - moment(a.startedAt);
+		    });
 
 		return callback(matches);
 	});
@@ -88,7 +90,6 @@ module.exports = React.createClass({
 
 				<div className="row">
 					<div className="col-xs-12 match-list">
-						<h2 className="title">Match History</h2>
 						<MatchList matches={this.state.matches} />
 					</div>
 				</div>

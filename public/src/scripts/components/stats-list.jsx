@@ -8,6 +8,7 @@ var PlayerPortrait = require('./player-portrait.jsx');
 module.exports = React.createClass({
 
 	propTypes: {
+		'title':   React.PropTypes.string.isRequired,
 	    'track':   React.PropTypes.string.isRequired,
 	    'matches': React.PropTypes.array.isRequired,
 	    'average': React.PropTypes.bool,
@@ -15,7 +16,7 @@ module.exports = React.createClass({
 
 	getInitialState: function() {
 		return {
-			'rankings': [ ],
+			'stats': [ ],
 		}
 	},
 
@@ -26,54 +27,11 @@ module.exports = React.createClass({
 	},
 
 	componentDidMount: function() {
-		return this.setRankings(this.props);
+		return this._addStatsFor(this.props);
 	},
 
 	componentWillReceiveProps: function(nextProps) {
-		return this.setRankings(nextProps);
-	},
-
-	setRankings: function(props) {
-		// First pluck the 'players' attr from matches and flatten the array.
-		// Then group the results by the players 'account.id'.
-		var players         = _.flatten(_.pluck(props.matches, 'players'));
-		var matchesByPlayer = _.groupBy(players, function(p) {
-			return p.account.id;
-		});
-
-		var rankings = [ ];
-
-		for(var accountID in matchesByPlayer) {
-			var matches = matchesByPlayer[accountID];
-
-			// Pluck the tracked property from 'match.stats' to form an array.
-			var results = matches.map(function(match) {
-				return match.stats[this.props.track];
-			}.bind(this));
-
-			// Sum up the results array.
-			var sumResults = _.reduce(results, function(s, n) {
-				return s + n;
-			});
-
-			// Average out the results if needed
-			if(this.props.average) {
-				sumResults /= matches.length;
-				sumResults = sumResults.toFixed(2)
-			}
-
-			rankings.push({
-				'value':   sumResults,
-				'sample':  matches.length,
-				'account': matches[0].account,
-			});
-		}
-
-		this.setState({
-			'rankings': rankings.sort(function(a, b) {
-				return b.value - a.value;
-			})
-		});
+		return this._addStatsFor(nextProps);
 	},
 
     render: function() {
@@ -87,22 +45,22 @@ module.exports = React.createClass({
             <div className="panel panel-default stats-list">
             	<div className="panel-heading">{this.props.title}</div>
             	<ul className="list-group">
-        		{this.state.rankings.map(function(r) {
+        		{this.state.stats.map(function(s) {
         			return (
-        				<li key={r.account.id} className="list-group-item">
+        				<li key={s.account.id} className="list-group-item">
 							<div className="row">
 								<div className="col-xs-2">
-									<PlayerPortrait key={r.account.id}
-										            account={r.account} />
+									<PlayerPortrait key={s.account.id}
+										            account={s.account} />
 								</div>
-								<div className="col-xs-2">
+								<div className="col-xs-6">
 									<span className="sample-size">
-										{r.sample}
+										Over {s.sample} matches
 									</span>
 								</div>
-								<div className="col-xs-8 text-right">
+								<div className="col-xs-4 text-right">
 									<span className="sample-value">
-										{r.value}
+										{s.value}
 									</span>
 								</div>
 							</div>
@@ -112,5 +70,46 @@ module.exports = React.createClass({
             	</ul>
             </div>
         );
-    }
+    },
+
+	_addStatsFor: function(props) {
+		// First pluck the 'players' attr from matches and flatten the array.
+		// Then group the results by the players 'account.id'.
+		var players         = _.flatten(_.pluck(props.matches, 'players'));
+		var matchesByPlayer = _.groupBy(players, function(p) {
+			return p.account.id;
+		});
+
+		var stats = [ ];
+
+		for(var accountID in matchesByPlayer) {
+			var matches = matchesByPlayer[accountID];
+			var account = matchesByPlayer[accountID][0].account;
+
+			// Pluck the tracked property from 'match.stats' to form an array.
+			var results = matches.map(function(match) {
+				return match.stats[props.track];
+			});
+
+			// Sum up the results array.
+			var result = _.reduce(results, function(s, n) {
+				return s + n;
+			});
+
+			// Average out the results if needed.
+			if(props.average) result = (result / matches.length).toFixed(2);
+
+			stats.push({
+				'value':   result,
+				'sample':  matches.length,
+				'account': account,
+			});
+		}
+
+		this.setState({
+			'stats': stats.sort(function(a, b) {
+				return b.value - a.value;
+			})
+		});
+	},
 });
