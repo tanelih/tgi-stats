@@ -13,6 +13,7 @@ var moment = require('moment');
 module.exports = React.createClass({
 
 	render: function() {
+		var now  = moment();
 		var curr = moment().year(this.props.year).week(this.props.week);
 
 		var prev        = curr.clone().subtract(1, 'weeks');
@@ -25,9 +26,10 @@ module.exports = React.createClass({
 			<a href={prevWeekURL}>&lt;</a>
 		);
 
+		var nextWeek = null;
 		// Don't show the 'next-week' control if we have selected the current
 		// week. This is achieved by leaving the 'next-week' control undefined.
-		if(moment().year() >= curr.year() && moment().week() > curr.week()) {
+		if(curr.week() != now.week() || curr.year() != now.year()) {
 			var nextWeek = (
 				<a href={nextWeekURL}>&gt;</a>
 			);
