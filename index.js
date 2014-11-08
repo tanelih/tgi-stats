@@ -18,16 +18,6 @@ if(fs.existsSync('.apikey')) {
 	}).split('\n')[0];
 }
 
-// We also check for a '.members' file if present and set it to the
-// 'CLAN_MEMBERS' environmental value.
-if(fs.existsSync('.members')) {
-	var members = fs.readFileSync('.members', { 'encoding': 'utf-8' })
-		.replace(/\r/g, '').split('\n');
-	// Filter out any empty lines. Join it into a ','-separated string.
-	process.env.CLAN_MEMBERS = members
-		.filter(function(m) { return !!m; }).join(',');
-}
-
 // Setup 'mongoose' and its 'schemas'.
 mongoose.connect('mongodb://localhost/tgistats');
 mongoose.model('match',  require('./lib/schemas/match'));
@@ -67,47 +57,19 @@ var request = require('./lib/utils/request');
 // TODO Use 'moment' to get 'fi' locale week number, and add them to the
 //      matches.
 server.listen(process.env.PORT || 3000, function onServerListening() {
-	console.log('Server listening at ', this.address().port);
 
-	var endpoint   = '/ISteamUser/ResolveVanityURL/v0001/';
-	var promises   = [ ];
-	var steamIDs   = [ ];
-	var vanityURLs = process.env.CLAN_MEMBERS.split(',');
-
-	// Filter out actual 'SteamIDs' from 'vanityURLs'.
-	for(var i = 0; i < vanityURLs.length; i++) {
-		try {
-			steamIDs.push(BigInteger(vanityURLs[i]));
-		}
-		catch(err) {
-			promises.push(request(endpoint, { 'vanityurl': vanityURLs[i] }));
-		}
-	}
+	// Member definitions, with both 'steam_id' and 'account_id'.
+	var members = require('./members.json');
 
 	var MatchHistoryWorker  = require('./lib/workers/match-history');
 	var PlayerSummaryWorker = require('./lib/workers/player-summary');
 
-	// Once all members have been resolved, start workers for each one.
-	//
-	// TODO Do these need to be background processes? Can we utilize something
-	//      like the 'child_process' module?
-	Promise.all(promises).then(
-		function onResolvedVanityURLs(queries) {
-			var resolvedIDs = queries.map(function(q) {
-				return q.response.steamid;
-			});
+	// Start a 'PlayerSummaryWorker' for our players.
+	new PlayerSummaryWorker(members).run();
 
-			// We finally have all of our Steam IDs in one place.
-			var playerSteamIDs = resolvedIDs.concat(steamIDs);
-
-			// Start a 'PlayerSummaryWorker' for our players.
-			new PlayerSummaryWorker(playerSteamIDs).run();
-
-			// Start 'MatchHistoryWorker' for each player, which will in turn
-			// run 'MatchDetailsWorker' for found matches.
-			playerSteamIDs.forEach(function(playerSteamID) {
-				new MatchHistoryWorker(playerSteamID).run();
-			});
-		},
-		console.error);
+	// Start 'MatchHistoryWorker' for each player, which will in turn run
+	// 'MatchDetailsWorker' for found matches.
+	members.forEach(function(member) {
+		new MatchHistoryWorker(member).run();
+	});
 });

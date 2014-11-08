@@ -1,6 +1,7 @@
 *.DS_Store
 *.apikey
-*.members
+
+members.json
 
 public/dist/
 node_modules/
