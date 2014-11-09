@@ -1,14 +1,14 @@
 'use strict'
 
-var page  = require('page');
-var React = require('react');
+var page   = require('page');
+var React  = require('react');
 var moment = require('moment');
 
 var WeekView = React.createFactory(require('./views/week.jsx'));
 
 page('/', function(ctx) {
-	var year = moment().year();
-	var week = moment().week();
+	var year = moment().locale('fi').year();
+	var week = moment().locale('fi').week();
 
 	return page.show('/matches/' + year + '/' + week + '');
 });
@@ -21,4 +21,6 @@ page('/matches/:year/:week', function(ctx) {
 	return React.render(weekView, document.getElementById('view'));
 });
 
-moment.locale('fi') && page.start();
+// 'moment' requires the locale-module when you set a locale through
+// 'moment.locale', hence 'browserify' does not pick it up.
+require('moment/locale/fi') && page.start();
