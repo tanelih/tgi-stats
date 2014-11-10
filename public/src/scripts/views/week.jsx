@@ -57,7 +57,7 @@ module.exports = React.createClass({
 		var week = this.props.week;
 
 		return (
-			<div>
+			<div className="week-view">
 				<div className="row">
 					<div className="col-xs-12 week-picker">
 						<WeekPicker year={year} week={week} />

@@ -4,39 +4,31 @@
 @import "bootstrap/less/bootstrap.less";
 
 /**
- * Set a 'fixed' background image for our site, that will not move when we
- * scroll, creating a 'parallax' effect.
+ * Fixed 'ribbons' for top and bottom of our page.
  */
 html {
-	/**
-	 * TODO Create a 'ribbonized' image that can be 'repeat-x' and has a
-	 *      specific height in 'px'.
-	 */
-	background: url('../img/samick.png') repeat-y top center fixed;
+	background: url('../img/kantosamit.png') repeat-x top left fixed;
 
-	/**
-	 * If the image is not large enough, there is always a black background.
-	 *
-	 * TODO Get a 'wide' image, maybe a chain of small pictures.
-	 */
 	background-color: #000;
 
-	/**
-	 * Preserve the image's aspect ratio.
-	 */
-	background-size:         auto 64vh;
-	-webkit-background-size: auto 64vh;
+	background-size:         auto 25vh;
+	-webkit-background-size: auto 25vh;
 
 	body {
+		background: url('../img/kantosamit.png') repeat-x bottom left fixed;
+
 		background-color: transparent;
+
+		background-size:         auto 25vh;
+		-webkit-background-size: auto 25vh;
 	}
 }
 
 /**
- * Header section: title with a 'parallax' effect.
+ * Header section. Title.
  */
 .header {
-	height:   50vh;
+	height:   25vh;
 	position: relative;
 
 	.title {
@@ -48,8 +40,28 @@ html {
 }
 
 /**
- * Content section, that wraps the 'bootstrap container', containing our actual
- * dynamic content.
+ * Footer section. Legal stuff.
+ */
+.footer {
+	height:   25vh;
+	position: relative;
+
+	/**
+	 * TODO Make legal stuff look nicer.
+	 */
+	a {
+		color:           #FFF;
+		text-decoration: none;
+
+		position: absolute;
+
+		left:   16px;
+		bottom: 16px;
+	}
+}
+
+/**
+ * Content between Header and Footer sections.
  */
 .content {
 	min-height: 50vh;
@@ -67,76 +79,13 @@ html {
 }
 
 /**
- * Footer containing the necessary 'powered-by' stuff.
+ * BOOTSTRAP OVERRIDES
  */
-.footer {
-
-	height:   128px;
-	position: relative;
-
-	a {
-		color:           #FFF;
-		text-decoration: none;
-
-		position: absolute;
-
-		left:   16px;
-		bottom: 16px;
-	}
-}
 
 /**
- *
+ * Remove shadows and borders from bootstrap panels. Used in conjuction with
+ * bootstrap list-groups.
  */
-.week-picker {
-	margin-top:    4px;
-	margin-bottom: 8px;
-}
-
-/**
- * Overwrite bootstrap's 'border-radius' for list items.
- */
-.list-group-item {
-	margin:  4px auto;
-	padding: 4px 8px !important;
-
-	border:        1px solid @gray-lighter !important;
-	border-radius: 0px !important;
-
-	/**
-	 * Center the text-content inside 'list-group-item' vertically.
-	 */
-	.text-right {
-		line-height: 32px;
-	}
-
-	/**
-	 * Border intensifies.
-	 */
-	&:hover {
-		border: 1px solid @list-group-border !important;
-	}
-}
-
-/**
- *
- */
-.player-portrait {
-	width:  32px;
-	height: 32px;
-
-	margin-right: 8px;
-
-	opacity: 0.8;
-
-	/**
-	 * Visibility intensifies.
-	 */
-	&:hover {
-		opacity: 1.00;
-	}
-}
-
 .panel {
 	border: none !important;
 
@@ -147,14 +96,76 @@ html {
 		border:        1px solid @panel-default-border !important;
 		border-radius: 0px !important;
 	}
+
+	/**
+	 * Overwrite bootstrap's 'border-radius' for list items.
+	 */
+	.list-group-item {
+		margin:  4px auto;
+		padding: 4px 8px !important;
+
+		border:        1px solid @gray-lighter !important;
+		border-radius: 0px !important;
+
+		/**
+		 * Center the text-content inside 'list-group-item' vertically.
+		 */
+		.text-right {
+			line-height: 32px;
+		}
+
+		/**
+		 * Border intensifies.
+		 */
+		&:hover {
+			border: 1px solid @list-group-border !important;
+		}
+	}
 }
 
-.stats-list {
-	.sample-size {
-		color: @gray-light;
+/**
+ * VIEW-SPECIFIC STUFF
+ */
 
-		font-size:    11px;
-		line-height:  32px;
-		margin-right: 24px;
+.week-view {
+
+	/**
+	 * Very minimal 'week-picker'.
+	 */
+	.week-picker {
+		margin-top:    4px;
+		margin-bottom: 8px;
+	}
+
+	/**
+	 *
+	 */
+	.stats-list {
+		.sample-size {
+			margin-right: 24px;
+
+			color:       @gray-light;
+			font-size:   11px;
+			line-height: 32px;
+		}
+	}
+
+	/**
+	 * Displays a Steam avatar.
+	 */
+	.player-portrait {
+		width:  32px;
+		height: 32px;
+
+		margin-right: 8px;
+
+		opacity: 0.8;
+
+		/**
+		 * Visibility intensifies.
+		 */
+		&:hover {
+			opacity: 1.00;
+		}
 	}
 }
