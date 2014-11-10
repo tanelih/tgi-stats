@@ -23,7 +23,17 @@ module.exports = React.createClass({
 	},
 
 	render: function() {
-		var acc         = this.props.account;
+		var acc = this.props.account;
+
+		if(!acc) {
+			return (
+				<a href="#" title="unknown" target="_blank">
+					<img src="http://placehold.it/64x64"
+					     className="player-portrait" />
+				</a>
+			);
+		}
+
 		var avatarURL   = acc.avatarURL;
 		var linkTitle   = acc.displayName;
 		var dotaBuffURL = 'http://www.dotabuff.com/players/' + acc.id + '';

@@ -1,9 +1,12 @@
 'use strict'
 
+var _       = require('lodash');
 var React   = require('react');
 var moment  = require('moment');
 var request = require('superagent');
 
+
+var KDAList    = require('../components/kda-list.jsx');
 var MatchList  = require('../components/match-list.jsx');
 var StatsList  = require('../components/stats-list.jsx');
 var WeekPicker = require('../components/week-picker.jsx');
@@ -21,7 +24,12 @@ function getMatches(at, callback) {
 		    	return moment(b.startedAt) - moment(a.startedAt);
 		    });
 
-		return callback(matches);
+		// First pluck the 'players' attr from matches and flatten the array.
+		// Then group the results by the players 'account.id'.
+		var players  = _.flatten(_.pluck(matches, 'players'));
+		var byPlayer = _.groupBy(players, function(p) { return p.account.id });
+
+		return callback(matches, byPlayer);
 	});
 }
 
@@ -29,7 +37,8 @@ module.exports = React.createClass({
 
 	getInitialState: function() {
 		return {
-			'matches': [ ]
+			'matches':  [ ],
+			'byPlayer': { },
 		}
 	},
 
@@ -41,14 +50,14 @@ module.exports = React.createClass({
 	},
 
 	componentDidMount: function() {
-		return getMatches(this.props, function(matches) {
-			this.setState({ 'matches': matches });
+		return getMatches(this.props, function(matches, byPlayer) {
+			this.setState({ 'matches': matches, 'byPlayer': byPlayer });
 		}.bind(this));
 	},
 
 	componentWillReceiveProps: function(nextProps) {
-		return getMatches(nextProps, function(matches) {
-			this.setState({ 'matches': matches });
+		return getMatches(nextProps, function(matches, byPlayer) {
+			this.setState({ 'matches': matches, 'byPlayer': byPlayer });
 		}.bind(this));
 	},
 
@@ -69,11 +78,9 @@ module.exports = React.createClass({
 				{/* Rankings by category */}
 				<div className="row">
 
-					{/* Kills, Deaths Assists go here... */}
+					{/* KDA CHART HERE */}
 					<div className="col-xs-12">
-						<div className="panel panel-default">
-							<div className="panel-heading">KDA</div>
-						</div>
+						<KDAList matches={this.state.byPlayer} />
 					</div>
 
 					{/* Kills */}
